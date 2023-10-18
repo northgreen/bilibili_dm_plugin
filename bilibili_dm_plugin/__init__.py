@@ -14,13 +14,9 @@ import sys
 
 sys.path.append("./")
 
-
-import json
 from . import blivedm
-import plugin_main
+from depends import plugin_main
 import msgs
-import asyncio
-import random
 import aiohttp
 from typing import *
 import http.cookies
