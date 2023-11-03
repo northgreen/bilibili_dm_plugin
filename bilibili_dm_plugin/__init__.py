@@ -15,8 +15,7 @@ import sys
 sys.path.append("./")
 
 from . import blivedm
-from depends import plugin_main
-import msgs
+from depends import plugin_main,msg
 import aiohttp
 from typing import *
 import http.cookies
