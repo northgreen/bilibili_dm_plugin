@@ -16,16 +16,34 @@ import sys
 
 sys.path.append("./")
 
+import os
+from urllib.parse import urlparse
+import urllib.request
 from . import blivedm
 from depends import plugin_main, msgs, connects
 import aiohttp
+from aiohttp import web
 from typing import *
 import http.cookies
 from .blivedm.clients import ws_base
 from .blivedm.models import web as web_models
+import logging
 
 session: Optional[aiohttp.ClientSession] = None
 SESSDATA = ''
+logger = logging.getLogger(__name__)
+local_path = __path__[0]
+
+
+def return_for_face(path: str):
+    if path:
+        files = os.listdir(os.path.join(local_path, "tmp"))
+        file = os.path.basename(urlparse(path).path)
+        if file in files:
+            return web.FileResponse(os.path.join(local_path, "tmp", file))
+        else:
+            urllib.request.urlretrieve(path, os.path.join(local_path, "tmp", file))
+            return web.FileResponse(os.path.join(local_path, "tmp", file))
 
 
 class Handler(blivedm.BaseHandler):
@@ -34,7 +52,7 @@ class Handler(blivedm.BaseHandler):
         self.lists = lists
 
     def _on_danmaku(self, client: blivedm.BLiveClient, message):
-        print(f'[{client.room_id}] {message.uname}：{message.msg}')
+        logger.info(f'[{client.room_id}] {message.uname}：{message.msg}')
         self.user_face[message.uname] = message.face
         peop_type = {0: 0, 1: 1, 2: 2, 3: 3}
         message = msgs.msg_box(
@@ -44,7 +62,7 @@ class Handler(blivedm.BaseHandler):
                 who=msgs.msg_who(
                     type=peop_type[message.privilege_type] if message.admin == 0 else 5,
                     name=message.uname,
-                    face=message.face
+                    face="/cgi/b_dm_plugin/face?url=" + message.face
                 ).to_dict()
             ).to_dict(),
             msg_type="dm"
@@ -52,8 +70,8 @@ class Handler(blivedm.BaseHandler):
         self.lists.append(message)
 
     def _on_gift(self, client: ws_base.WebSocketClientBase, message: web_models.GiftMessage):
-        print(f'[{client.room_id}] {message.uname} 赠送{message.gift_name}x{message.num}'
-              f' （{message.coin_type}瓜子x{message.total_coin}）')
+        logger.info(f'[{client.room_id}] {message.uname} 赠送{message.gift_name}x{message.num}'
+                    f' （{message.coin_type}瓜子x{message.total_coin}）')
         peop_type = {0: 0, 1: 1, 2: 2, 3: 3}
         message = msgs.msg_box(
             message_class="default",
@@ -62,7 +80,7 @@ class Handler(blivedm.BaseHandler):
                 who=msgs.msg_who(
                     type=peop_type[message.guard_level],
                     name=message.uname,
-                    face=message.face
+                    face="/cgi/b_dm_plugin/face?url=" + message.face
                 ).to_dict(),
                 pic=self.user_face[message.uname] if message.uname in self.user_face else "null"
             ).to_dict(),
@@ -76,38 +94,44 @@ class Plugin_Main(plugin_main.Plugin_Main):
 
     def plugin_init(self):
         self.runners = []
+        self.plugin_name = "b_dm_plugin"
 
         self.sprit_cgi_support = True
-        self.sprit_cgi_path = "test"
+        self.sprit_cgi_lists["face"] = self.sprit_cgi
+
         return "message"
 
-    async def sprit_cgi(self, request):
-        return self.web.Response(text="ok")
+    async def sprit_cgi(self, request: web.Request):
+        ret = web.Response(status=404, text="no such file")
+        ret = return_for_face(request.rel_url.query.get("url"))
+        return ret
 
     async def plugin_main(self):
         while True:
             await asyncio.sleep(1)
 
     def plugin_callback(self):
-        print(f"plugin {__name__} is done")
+        logger.info(f"plugin {__name__} is done")
 
     def dm_iter(self, params: dict, connect_waper: connects.connect_wrapper) -> object:
         class dm_iter_back:
             def __init__(self, params, connect_waper):
                 self.messages = []
+                if "broom" in params:
+                    cookies = http.cookies.SimpleCookie()
+                    cookies['SESSDATA'] = SESSDATA
+                    cookies['SESSDATA']['domain'] = 'bilibili.com'
 
-                cookies = http.cookies.SimpleCookie()
-                cookies['SESSDATA'] = SESSDATA
-                cookies['SESSDATA']['domain'] = 'bilibili.com'
+                    session = aiohttp.ClientSession()
+                    session.cookie_jar.update_cookies(cookies)
 
-                session = aiohttp.ClientSession()
-                session.cookie_jar.update_cookies(cookies)
+                    self.client = blivedm.BLiveClient(params["broom"], session=session)
 
-                self.client = blivedm.BLiveClient(params["broom"], session=session)
-
-                handler = Handler(self.messages)
-                self.client.set_handler(handler)
-                self.client.start()
+                    handler = Handler(self.messages)
+                    self.client.set_handler(handler)
+                    self.client.start()
+                else:
+                    logger.error("unexpect room, client will be invalid!")
 
             async def __aiter__(self):
                 try:
@@ -116,6 +140,7 @@ class Plugin_Main(plugin_main.Plugin_Main):
                     return
 
             def __del__(self):
-                asyncio.get_event_loop().create_task(self.client.stop_and_close())
+                if hasattr(self, "client"):
+                    asyncio.get_event_loop().create_task(self.client.stop_and_close())
 
         return dm_iter_back(params, connect_waper)
