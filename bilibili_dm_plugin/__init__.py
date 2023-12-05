@@ -18,9 +18,9 @@ sys.path.append("./")
 
 import os
 from urllib.parse import urlparse
-import urllib.request
 from . import blivedm
 from depends import plugin_main, msgs, connects
+import shutil
 
 import aiohttp
 from aiohttp import web
@@ -36,14 +36,25 @@ logger = logging.getLogger(__name__)
 local_path = __path__[0]
 
 
-def return_for_face(path: str):
+async def download_file(url, file_name):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            with open(file_name, 'wb') as file:
+                while True:
+                    chunk = await response.content.read(1024)
+                    if not chunk:
+                        break
+                    file.write(chunk)
+
+
+async def return_for_face(path: str):
     if path:
         files = os.listdir(os.path.join(local_path, "tmp"))
         file = os.path.basename(urlparse(path).path)
         if file in files:
             return web.FileResponse(os.path.join(local_path, "tmp", file))
         else:
-            urllib.request.urlretrieve(path, os.path.join(local_path, "tmp", file))
+            await download_file(path, os.path.join(local_path, "tmp", file))
             return web.FileResponse(os.path.join(local_path, "tmp", file))
 
 
@@ -94,20 +105,28 @@ class Handler(blivedm.BaseHandler):
 class Plugin_Main(plugin_main.Plugin_Main):
 
     def plugin_init(self):
+        if os.path.exists(os.path.join(local_path, "tmp")):
+            shutil.rmtree(os.path.join(local_path, "tmp"))
+            os.mkdir(os.path.join(local_path, "tmp"))
+        else:
+            os.mkdir(os.path.join(local_path, "tmp"))
         self.runners = []
         self.plugin_name = "b_dm_plugin"
 
         self.sprit_cgi_support = True
         self.sprit_cgi_lists["face"] = self.sprit_cgi
+        self.read_config()
 
         return "message"
 
     async def sprit_cgi(self, request: web.Request):
         ret = web.Response(status=404, text="no such file")
-        ret = return_for_face(request.rel_url.query.get("url"))
+        ret = await return_for_face(request.rel_url.query.get("url"))
         return ret
 
     async def plugin_main(self):
+        self.config = {"test": "test"}
+        self.update_config()
         while True:
             await asyncio.sleep(1)
 
