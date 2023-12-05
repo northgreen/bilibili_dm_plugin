@@ -22,6 +22,7 @@ from . import blivedm
 from depends import plugin_main, msgs, connects
 import shutil
 
+
 import aiohttp
 from aiohttp import web
 from typing import *
@@ -48,6 +49,7 @@ async def download_file(url, file_name):
 
 
 async def return_for_face(path: str):
+
     if path:
         files = os.listdir(os.path.join(local_path, "tmp"))
         file = os.path.basename(urlparse(path).path)
@@ -55,6 +57,7 @@ async def return_for_face(path: str):
             return web.FileResponse(os.path.join(local_path, "tmp", file))
         else:
             await download_file(path, os.path.join(local_path, "tmp", file))
+
             return web.FileResponse(os.path.join(local_path, "tmp", file))
 
 
