@@ -30,7 +30,7 @@ from .blivedm.clients import ws_base
 from .blivedm.models import web as web_models
 import logging
 
-session: Optional[aiohttp.ClientSession] = None
+
 SESSDATA = ''
 logger = logging.getLogger(__name__)
 local_path = __path__[0]
@@ -94,7 +94,10 @@ class Handler(blivedm.BaseHandler):
                     name=message.uname,
                     face="/cgi/b_dm_plugin/face?url=" + message.face
                 ).to_dict(),
-                pic=self.user_face[message.uname] if message.uname in self.user_face else "null"
+                pic=msgs.pic(
+                    border=False,
+                    pic_url="/cgi/b_dm_plugin/gift?item=" + message.gift_name + ".png"
+                ).to_dict()
             ).to_dict(),
             msg_type="info"
         ).to_dict()
@@ -110,19 +113,22 @@ class Plugin_Main(plugin_main.Plugin_Main):
             os.mkdir(os.path.join(local_path, "tmp"))
         else:
             os.mkdir(os.path.join(local_path, "tmp"))
-        self.runners = []
         self.plugin_name = "b_dm_plugin"
 
         self.sprit_cgi_support = True
-        self.sprit_cgi_lists["face"] = self.sprit_cgi
+        self.sprit_cgi_lists["face"] = self.cgi_face
+        self.sprit_cgi_lists["gift"] = self.cgi_gift
         self.read_config()
 
         return "message"
 
-    async def sprit_cgi(self, request: web.Request):
+    async def cgi_face(self, request: web.Request):
         ret = web.Response(status=404, text="no such file")
         ret = await return_for_face(request.rel_url.query.get("url"))
         return ret
+
+    async def cgi_gift(self, request: web.Request):
+        return web.FileResponse(os.path.join(local_path, "resource", request.rel_url.query.get("item")))
 
     async def plugin_main(self):
         self.config = {"test": "test"}
@@ -142,10 +148,11 @@ class Plugin_Main(plugin_main.Plugin_Main):
                     cookies['SESSDATA'] = SESSDATA
                     cookies['SESSDATA']['domain'] = 'bilibili.com'
 
-                    session = aiohttp.ClientSession()
-                    session.cookie_jar.update_cookies(cookies)
+                    self.session: Optional[aiohttp.ClientSession]
+                    self.session = aiohttp.ClientSession()
+                    self.session.cookie_jar.update_cookies(cookies)
 
-                    self.client = blivedm.BLiveClient(params["broom"], session=session)
+                    self.client = blivedm.BLiveClient(params["broom"], session=self.session)
 
                     handler = Handler(self.messages)
                     self.client.set_handler(handler)
@@ -159,8 +166,10 @@ class Plugin_Main(plugin_main.Plugin_Main):
                 except IndexError:
                     return
 
-            def __del__(self):
-                if hasattr(self, "client"):
-                    asyncio.get_event_loop().create_task(self.client.stop_and_close())
+            async def callback(self):
+                logger.info("blivedm closing")
+                if self.client:
+                    await self.session.close()
+                    await self.client.stop_and_close()
 
         return dm_iter_back(params, connect_waper)
