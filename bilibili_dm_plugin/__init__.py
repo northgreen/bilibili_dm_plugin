@@ -30,8 +30,6 @@ from .blivedm.clients import ws_base
 from .blivedm.models import web as web_models
 import logging
 
-
-SESSDATA = ''
 logger = logging.getLogger(__name__)
 local_path = __path__[0]
 
@@ -120,6 +118,13 @@ class Plugin_Main(plugin_main.Plugin_Main):
         self.sprit_cgi_lists["gift"] = self.cgi_gift
         self.read_config()
 
+        # print(self.config)
+        if "session" in self.config:
+            self.SESSDATA = self.config["session"]
+        else:
+            self.config["session"] = ""
+            self.update_config(self.config)
+
         return "message"
 
     async def cgi_face(self, request: web.Request):
@@ -131,8 +136,6 @@ class Plugin_Main(plugin_main.Plugin_Main):
         return web.FileResponse(os.path.join(local_path, "resource", request.rel_url.query.get("item")))
 
     async def plugin_main(self):
-        self.config = {"test": "test"}
-        self.update_config()
         while True:
             await asyncio.sleep(1)
 
@@ -141,11 +144,11 @@ class Plugin_Main(plugin_main.Plugin_Main):
 
     def dm_iter(self, params: dict, connect_waper: connects.connect_wrapper) -> object:
         class dm_iter_back:
-            def __init__(self, params, connect_waper):
+            def __init__(self, params, connect_waper, session):
                 self.messages = []
                 if "broom" in params:
                     cookies = http.cookies.SimpleCookie()
-                    cookies['SESSDATA'] = SESSDATA
+                    cookies['SESSDATA'] = session
                     cookies['SESSDATA']['domain'] = 'bilibili.com'
 
                     self.session: Optional[aiohttp.ClientSession]
@@ -168,8 +171,8 @@ class Plugin_Main(plugin_main.Plugin_Main):
 
             async def callback(self):
                 logger.info("blivedm closing")
-                if self.client:
+                if hasattr(self, "client"):
                     await self.session.close()
                     await self.client.stop_and_close()
 
-        return dm_iter_back(params, connect_waper)
+        return dm_iter_back(params, connect_waper, self.SESSDATA)
