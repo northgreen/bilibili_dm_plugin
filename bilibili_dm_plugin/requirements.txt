@@ -1,0 +1,4 @@
+aiohttp==3.8.6
+Brotli==1.1.0
+pure-protobuf==3.0.0
+yarl==1.9.2
