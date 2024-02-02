@@ -21,7 +21,6 @@ from urllib.parse import urlparse
 from . import blivedm
 from depends import plugin_main, msgs, connects
 import shutil
-
 import aiohttp
 from aiohttp import web
 from typing import *
@@ -46,6 +45,7 @@ async def download_file(url, file_name):
 
 
 async def return_for_face(path: str):
+
     if path:
         files = os.listdir(os.path.join(local_path, "tmp"))
         file = os.path.basename(urlparse(path).path)
@@ -53,6 +53,7 @@ async def return_for_face(path: str):
             return web.FileResponse(os.path.join(local_path, "tmp", file))
         else:
             await download_file(path, os.path.join(local_path, "tmp", file))
+
             return web.FileResponse(os.path.join(local_path, "tmp", file))
 
 
@@ -111,6 +112,7 @@ class Plugin_Main(plugin_main.Plugin_Main):
             os.mkdir(os.path.join(local_path, "tmp"))
         else:
             os.mkdir(os.path.join(local_path, "tmp"))
+
         self.plugin_name = "b_dm_plugin"
 
         self.sprit_cgi_support = True
@@ -125,6 +127,7 @@ class Plugin_Main(plugin_main.Plugin_Main):
             self.config["session"] = ""
             self.update_config(self.config)
 
+
         return "message"
 
     async def cgi_face(self, request: web.Request):
@@ -136,6 +139,8 @@ class Plugin_Main(plugin_main.Plugin_Main):
         return web.FileResponse(os.path.join(local_path, "resource", request.rel_url.query.get("item")))
 
     async def plugin_main(self):
+        self.config = {"test": "test"}
+        self.update_config()
         while True:
             await asyncio.sleep(1)
 
