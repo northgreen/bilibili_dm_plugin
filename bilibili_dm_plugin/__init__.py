@@ -19,7 +19,7 @@ sys.path.append("./")
 import os
 from urllib.parse import urlparse
 from . import blivedm
-from depends import plugin_main, msgs, connects
+from depends import pluginmain, msgs, connects
 import shutil
 import aiohttp
 from aiohttp import web
@@ -104,7 +104,7 @@ class Handler(blivedm.BaseHandler):
 
 
 # noinspection DuplicatedCode
-class Plugin_Main(plugin_main.Plugin_Main):
+class PluginMain(plugin_main.PluginMain):
 
     def plugin_init(self):
         if os.path.exists(os.path.join(local_path, "tmp")):
@@ -140,16 +140,16 @@ class Plugin_Main(plugin_main.Plugin_Main):
 
     async def plugin_main(self):
         self.config = {"test": "test"}
-        self.update_config()
+        self.update_config(self.config)
         while True:
             await asyncio.sleep(1)
 
     def plugin_callback(self):
         logger.info(f"plugin {__name__} is done")
 
-    def dm_iter(self, params: dict, connect_waper: connects.connect_wrapper) -> object:
+    def dm_iter(self, params: dict) -> object:
         class dm_iter_back:
-            def __init__(self, params, connect_waper, session):
+            def __init__(self, params, session):
                 self.messages = []
                 if "broom" in params:
                     cookies = http.cookies.SimpleCookie()
@@ -180,4 +180,4 @@ class Plugin_Main(plugin_main.Plugin_Main):
                     await self.session.close()
                     await self.client.stop_and_close()
 
-        return dm_iter_back(params, connect_waper, self.SESSDATA)
+        return dm_iter_back(params, self.SESSDATA)
