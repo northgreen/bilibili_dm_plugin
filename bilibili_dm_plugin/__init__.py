@@ -19,7 +19,7 @@ sys.path.append("./")
 import os
 from urllib.parse import urlparse
 from . import blivedm
-from depends import pluginmain, msgs, connects
+from depends import msgs
 import shutil
 import aiohttp
 from aiohttp import web
