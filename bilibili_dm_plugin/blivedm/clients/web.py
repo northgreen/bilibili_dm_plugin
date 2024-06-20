@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import asyncio
 import logging
 from typing import *
@@ -16,7 +17,7 @@ __all__ = (
 logger = logging.getLogger('blivedm')
 
 UID_INIT_URL = 'https://api.bilibili.com/x/web-interface/nav'
-BUVID_INIT_URL = 'https://data.bilibili.com/v/'
+BUVID_INIT_URL = 'https://www.bilibili.com/'
 ROOM_INIT_URL = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getInfoByRoom'
 DANMAKU_SERVER_CONF_URL = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo'
 DEFAULT_DANMAKU_SERVER_LIST = [
