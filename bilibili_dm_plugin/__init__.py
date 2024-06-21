@@ -51,7 +51,7 @@ class MessageHandler(blivedm.BaseHandler):
         peop_type = {0: 0, 1: 1, 2: 2, 3: 3}
         message = msgs.msg_box(
             message_class="default",
-            message_body=msgs.dm(
+            message_body=msgs.Danmku(
                 msg=message.msg,
                 who=msgs.msg_who(
                     type=peop_type[message.privilege_type] if message.admin == 0 else 5,
@@ -59,7 +59,7 @@ class MessageHandler(blivedm.BaseHandler):
                     face="/cgi/b_dm_plugin/face?url=" + ""
                 ).to_dict()
             ).to_dict(),
-            msg_type="dm"
+            msg_type="Danmku"
         ).to_dict()
         self.lists.append(message)
 

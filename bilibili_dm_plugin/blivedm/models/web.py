@@ -192,7 +192,7 @@ class DanmakuMessage:
     def voice_config_dict(self) -> dict:
         """
         示例：
-        {'voice_url': 'https%3A%2F%2Fboss.hdslb.com%2Flive-dm-voice%2Fb5b26e48b556915cbf3312a59d3bb2561627725945.wav
+        {'voice_url': 'https%3A%2F%2Fboss.hdslb.com%2Flive-Danmku-voice%2Fb5b26e48b556915cbf3312a59d3bb2561627725945.wav
          %3FX-Amz-Algorithm%3DAWS4-HMAC-SHA256%26X-Amz-Credential%3D2663ba902868f12f%252F20210731%252Fshjd%252Fs3%25
          2Faws4_request%26X-Amz-Date%3D20210731T100545Z%26X-Amz-Expires%3D600000%26X-Amz-SignedHeaders%3Dhost%26
          X-Amz-Signature%3D114e7cb5ac91c72e231c26d8ca211e53914722f36309b861a6409ffb20f07ab8',

@@ -79,7 +79,7 @@ class BaseHandler(HandlerInterface):
         # 收到心跳包，这是blivedm自造的消息，原本的心跳包格式不一样
         '_HEARTBEAT': _make_msg_callback('_on_heartbeat', web_models.HeartbeatMessage),
         # 收到弹幕
-        # go-common\app\service\live\live-dm\service\v1\send.go
+        # go-common\app\service\live\live-Danmku\service\v1\send.go
         'DANMU_MSG': __danmu_msg_callback,
         # 有人送礼
         'SEND_GIFT': _make_msg_callback('_on_gift', web_models.GiftMessage),
