@@ -69,7 +69,7 @@ class MessageHandler(blivedm.BaseHandler):
         people_type = {0: 0, 1: 1, 2: 2, 3: 3}
         message = msgs.msg_box(
             message_class="default",
-            message_body=msgs.info(
+            message_body=msgs.Info(
                 msg=f"感谢{message.uname}赠送的{message.gift_name}",
                 who=msgs.msg_who(
                     type=people_type[message.guard_level],
@@ -81,7 +81,7 @@ class MessageHandler(blivedm.BaseHandler):
                     pic_url="/cgi/b_dm_plugin/gift?item=" + message.gift_name + ".png"
                 ).to_dict()
             ).to_dict(),
-            msg_type="info"
+            msg_type="Info"
         ).to_dict()
         self.lists.append(message)
 
